@@ -15,4 +15,8 @@ INCLUDEPATH += -I/usr/local/include \
 
 LIBS += -L/usr/local/lib -lopencv_ml -lopencv_dnn -lopencv_objdetect -lopencv_stitching -lopencv_superres -lopencv_videostab -lopencv_photo -lopencv_shape -lopencv_video -lopencv_calib3d -lopencv_features2d -lopencv_highgui -lopencv_videoio -lopencv_imgcodecs -lopencv_imgproc -lopencv_flann -lopencv_core
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    DataCollect.cpp
+
+HEADERS += \
+    DataCollect.h
