@@ -21,9 +21,9 @@ DataCollect::DataCollect(int canvas_w,int canvas_h,int ndataSize,int ndataRange)
         this->ndataSize=ndataSize;//显示数据个数
     }
     if(ndataRange==-1){
-        this->ndataRange=canvas_h;//显示数据个数=画布高度
+        this->ndataRange=canvas_h;//显示数据范围=画布高度
     }else{
-        this->ndataRange=ndataRange;//显示数据个数
+        this->ndataRange=ndataRange;//显示数据范围
     }
     interval=float(canvas_w)/canvas_w;//区间=画布宽度/显示数据个数
     this->canvas_h=canvas_h;//画布高度
@@ -76,7 +76,7 @@ void DataCollect::gui(float data,Scalar color)
 
     char fdata[10]="";
     sprintf(fdata,"%.f",data);
-    putText(coll,fdata,Point(canvas_w-20+offset_t,canvas_h-data+offset_v),1,1,color,1,8);
+    putText(coll,fdata,Point(canvas_w-30+offset_t,canvas_h-data+offset_v),1,1,color,1,8);
 }
 
 void DataCollect::setCanvas()

@@ -15,6 +15,11 @@ int main()
     VideoCapture cap(0);
 
     int gray_avg=0;
+
+    //画布宽度
+    //画布高度
+    //显示数据个数（-1 画布宽度）
+    //显示数据范围（-1 画布高度）
     DataCollect data_col(1000,510,-1,255);
 
     while(1)
