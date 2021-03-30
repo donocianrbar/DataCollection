@@ -4,16 +4,6 @@
 
 using namespace std;
 
-/*
-完成功能：
-1、完成dataCollectProc方法，实现多个数据同时在同一张图中显示
-   完成dataCollectInvProc方法，实现多个数据同时在同一张图中显示，dataCollectInvProc方法可分别调用
-2、完善平移时画布坐标线的显示
-3、实现水平与垂直方向的缩放功能
-   垂直方向超出范围自动缩放
-4、实现使用鼠标平移画布
-*/
-
 DataCollect::DataCollect(int canvas_w,int canvas_h,int ndataSize,int ndataRange)
 {
     for(int i=0;i<DATA_BUFF_SIZE_MAX;i++)
@@ -42,16 +32,6 @@ DataCollect::DataCollect(int canvas_w,int canvas_h,int ndataSize,int ndataRange)
     proportion_t=1;//时间比例
     offset_v=0;//值偏移
     offset_t=0;//时间偏移
-}
-
-void DataCollect::dataCollectProc(vector<float> data,vector<Scalar> color,const String winname)
-{
-    
-}
-
-void DataCollect::dataCollectInvProc(float data,Scalar color,const String winname)
-{
-    
 }
 
 void DataCollect::dataCollect(float data,Scalar color,const String winname)

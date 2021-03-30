@@ -6,21 +6,60 @@
 using namespace cv;
 using namespace std;
 
-#define AVG_BUFF_SIZE 250
+#define AVG_BUFF_SIZE 250            //
+#define WIN_NAME_ADT "adaptive"
+#define WIN_NAME_TARGET "target_size"
+
+struct Adaptive
+{
+    int blockSize;
+    int constValue;
+};
+
+struct TargetSize
+{
+    int wmin;
+    int wmax;
+    int hmin;
+    int hmax;
+    int radiol;
+    int radioh;
+};
 
 int main()
 {
-    // å›¾åƒæºè·å–åŠåˆ¤æ–­
+    // Í¼ÏñÔ´»ñÈ¡¼°ÅĞ¶Ï
     cv::Mat Image, ImageGray;
     VideoCapture cap(0);
+    // ¾Ö²¿¶şÖµ»¯²ÎÊıµ÷Õû
+    Adaptive adt;
+    adt.blockSize = 360;
+    adt.constValue = 20;
+    cv::namedWindow(WIN_NAME_ADT);
+    cv::createTrackbar("blockSize", WIN_NAME_ADT, &adt.blockSize, 720);
+    cv::createTrackbar("constValue", WIN_NAME_ADT, &adt.constValue, 50);
+    // Ä¿±ê´óĞ¡¼°³¤¿í±Èµ÷Õû
+    TargetSize tsize;
+    tsize.wmin=50;
+    tsize.wmax=450;
+    tsize.hmin=50;
+    tsize.hmax=450;
+    tsize.radiol=5;
+    tsize.radioh=15;
+    namedWindow(WIN_NAME_TARGET);
+    cv::createTrackbar("wmin",WIN_NAME_TARGET,&tsize.wmin, 1000);
+    cv::createTrackbar("wmax",WIN_NAME_TARGET,&tsize.wmax, 1000);
+    cv::createTrackbar("hmin",WIN_NAME_TARGET,&tsize.hmin, 1000);
+    cv::createTrackbar("hmax",WIN_NAME_TARGET,&tsize.hmax, 1000);
+    cv::createTrackbar("radiol",WIN_NAME_TARGET,&tsize.radiol, 10);
+    cv::createTrackbar("radioh",WIN_NAME_TARGET,&tsize.radioh, 20);
 
-    int gray_avg=0;
-
-    //ç”»å¸ƒå®½åº¦
-    //ç”»å¸ƒé«˜åº¦
-    //æ˜¾ç¤ºæ•°æ®ä¸ªæ•°ï¼ˆ-1 ç”»å¸ƒå®½åº¦ï¼‰
-    //æ˜¾ç¤ºæ•°æ®èŒƒå›´ï¼ˆ-1 ç”»å¸ƒé«˜åº¦ï¼‰
-    DataCollect data_col(1000,510,-1,255);
+    //³õÊ¼»¯»­²¼£¬ÒÔÏÔÊ¾²É¼¯µÄÊı¾İ
+    //»­²¼¿í¶È
+    //»­²¼¸ß¶È
+    //ÏÔÊ¾Êı¾İ¸öÊı???-1 »­²¼¿í¶È???
+    //ÏÔÊ¾Êı¾İ·¶Î§???-1 »­²¼¸ß¶È???
+    DataCollect data_col(1000,510,-1,400);
 
     while(1)
     {
@@ -28,23 +67,56 @@ int main()
 
         if(Image.empty())
           return -1;
-        cv::imshow("Image",Image);
-        // è½¬æ¢ä¸ºç°åº¦å›¾åƒ
+        cv::imshow("Ô­Í¼",Image);
+        // ×ª»»Îª»Ò¶ÈÍ¼
+        Mat ImageGray;
         cv::cvtColor(Image,ImageGray,CV_BGR2GRAY);
 
-        //è®¡ç®—å‡ç°åº¦å€¼
-        int sum=0;
-        for(int i=0;i<ImageGray.rows;i++)
+        //¾Ö²¿¶şÖµ»¯
+        Mat bin;
+        cv::adaptiveThreshold(ImageGray, bin, 255, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY, adt.blockSize*2+1, adt.constValue);
+        cv::imshow("¶şÖµÍ¼",bin);
+
+        //Ñ°ÕÒ±ßÔµ
+        std::vector<std::vector<cv::Point2i>>contours;
+        std::vector<cv::Vec4i>hierarchy;
+        cv::findContours(bin,contours,hierarchy,cv::RETR_TREE, cv::CHAIN_APPROX_NONE);
+
+        //ÄâºÏ¾ØĞÎ
+        Rect rrect;
+        Mat show_img=Image.clone();
+        for(int i=0;i<contours.size();i++)
         {
-            uchar *data=ImageGray.ptr<uchar>(i);
-            for(int j=0;j<ImageGray.cols;j++)
+            cv::Rect rect = boundingRect(contours[i]);
+            //É¸Ñ¡³ö·ûºÏÌõ¼şµÄ¾ØĞÎ
+            if(rect.width >= tsize.wmin&&rect.width <= tsize.wmax&&
+                rect.height >= tsize.hmin&&rect.width <= tsize.hmax&&
+                (rect.width * 1.0 / rect.height) >= tsize.radiol*0.1&&(rect.width * 1.0 / rect.height) <= tsize.radioh*0.1)
             {
-                sum+=data[j];
+                rrect=rect;
+                rectangle(show_img,rect,Scalar(0,255,0),2);//»­ÔÚshow_imgÉÏ£¬·ûºÏÌõ¼ş->ÂÌÉ«
+                char trect[10];
+                sprintf(trect,"%d %d",rect.width,rect.height);
+                putText(show_img,trect,rect.br(),1,2,Scalar(0,255,0),1);
+            }
+            else
+            {
+                rectangle(show_img,rect,Scalar(0,0,255),2);//»­ÔÚshow_imgÉÏ£¬²»·ûºÏÌõ¼ş->ºìÉ«
             }
         }
+        imshow("rect",show_img);//ÏÔÊ¾½á¹û
 
-        gray_avg=sum/(ImageGray.rows*ImageGray.cols);
-        data_col.dataCollect(gray_avg,Scalar(0,255,0),"gray_avg");
+        /**
+         * ÊµÏÖ£ºÊµÊ±Êı¾İ  rect.x/rect.y  µÄÂË²¨
+         * 1/¹ıÂË¸ßÆµÔëÉù
+         * 2/Êı¾İ·¢Éú½×Ô½Ìø±äÊ±£¬Ê¹Êı¾İ±ä»¯Æ½»º
+         * ¿¨¶ûÂüÂË²¨¶¯Ì¬¹ì¼£Ô¤²â
+         * ÔÚshow_imgÖĞ»­³öÂË²¨Ç°ÓëÂË²¨ºóµÄ¹ì¼£
+         * @date   2018.11.19
+         */
+
+        //ÏÔÊ¾
+        data_col.dataCollect(rrect.x,Scalar(0,255,0),"rrect.x");
         waitKey(1);
     }
     return 0;
