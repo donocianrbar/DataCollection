@@ -56,19 +56,30 @@ void DataCollect::dataCollectInvProc(float data,Scalar color,const String winnam
 
 void DataCollect::dataCollect(float data,Scalar color,const String winname)
 {
+    //黑色的背景
     coll=Mat::zeros(canvas_h,canvas_w,CV_8UC3);
+    //设置画布样式
     setCanvas();
+    //利用滑动条调整显示比例与偏移
     gui(data,color);
+    //data_q_h是当前数据写入的索引（数组下标）
+    //data_q_h超出范围后归0
+    //data_q 就是一个用数组实现的循环队列
     data_q_h=data_q_h%ndataSize;
     data_q[data_q_h]=data;
+    //缩放到合适的范围
     data_q[data_q_h]*=(canvas_h/ndataRange);
 
+    //将 data_q 循环队列中的所有数据（点）连接起来，画出
     int p_data;
     for(int j=0;j<ndataSize-1;j++)
     {
         p_data=data_q_h-j+canvas_w;
-        line(coll,Point(interval*(ndataSize-j-1)+offset_t,proportion_v*(canvas_h-data_q[(p_data-1)%canvas_w])+offset_v),
-             Point(interval*(ndataSize-j)+offset_t,proportion_t*(canvas_h-data_q[p_data%canvas_w])+offset_v),
+        //画线
+        //第2个参数：前一个点（后一个点的数据位置）Point(x,y) x是时间轴，从前各往后 y是数据的大小
+        //第3个参数：当前点（当前的数据位置）
+        line(coll,Point(interval*(ndataSize-j-1)+offset_t,(canvas_h-data_q[(p_data-1)%canvas_w])+offset_v),
+             Point(interval*(ndataSize-j)+offset_t,(canvas_h-data_q[p_data%canvas_w])+offset_v),
              color,1,8,0);
     }
     data_q_h++;
@@ -83,12 +94,14 @@ void DataCollect::gui(float data,Scalar color)
     static int offset_v_subhalf=canvas_h/2;
     static int offset_t_subhalf=canvas_w/2;
 
+    //设置比例
     namedWindow("gui",WINDOW_AUTOSIZE);
     createTrackbar("proportion_v*100","gui",&proportion_v_subhalf,200);
     createTrackbar("proportion_t*100","gui",&proportion_t_subhalf,200);
     proportion_v=proportion_v_subhalf/100.0;
     proportion_t=proportion_t_subhalf/100.0;
 
+    //设置偏移
     createTrackbar("offset_v+h/2","gui",&offset_v_subhalf,canvas_h);
     createTrackbar("offset_t+w/2","gui",&offset_t_subhalf,canvas_w);
     offset_v=offset_v_subhalf-canvas_h/2.0;
