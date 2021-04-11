@@ -1,12 +1,12 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
-#include "DataCollect.h"
+#include "DataCollect.hpp"
 
 using namespace cv;
 using namespace std;
 
-#define AVG_BUFF_SIZE 250            //
+#define AVG_BUFF_SIZE 250
 #define WIN_NAME_ADT "adaptive"
 #define WIN_NAME_TARGET "target_size"
 
@@ -28,17 +28,19 @@ struct TargetSize
 
 int main()
 {
-    // Í¼ÏñÔ´»ñÈ¡¼°ÅĞ¶Ï
+    // å›¾åƒæºè·å–åŠåˆ¤æ–­
     cv::Mat Image, ImageGray;
     VideoCapture cap(0);
-    // ¾Ö²¿¶şÖµ»¯²ÎÊıµ÷Õû
+    // å±€éƒ¨äºŒå€¼åŒ–å‚æ•°è°ƒæ•´
     Adaptive adt;
     adt.blockSize = 360;
     adt.constValue = 20;
+    
     cv::namedWindow(WIN_NAME_ADT);
-    cv::createTrackbar("blockSize", WIN_NAME_ADT, &adt.blockSize, 720);
-    cv::createTrackbar("constValue", WIN_NAME_ADT, &adt.constValue, 50);
-    // Ä¿±ê´óĞ¡¼°³¤¿í±Èµ÷Õû
+    cv::createTrackbar("blockSize", WIN_NAME_ADT, &adt.blockSize, 720,NULL);
+    cv::createTrackbar("constValue", WIN_NAME_ADT, &adt.constValue, 50,NULL);
+    
+    // ç›®æ ‡å¤§å°åŠé•¿å®½æ¯”è°ƒæ•´
     TargetSize tsize;
     tsize.wmin=50;
     tsize.wmax=450;
@@ -46,77 +48,88 @@ int main()
     tsize.hmax=450;
     tsize.radiol=5;
     tsize.radioh=15;
+    
     namedWindow(WIN_NAME_TARGET);
-    cv::createTrackbar("wmin",WIN_NAME_TARGET,&tsize.wmin, 1000);
-    cv::createTrackbar("wmax",WIN_NAME_TARGET,&tsize.wmax, 1000);
-    cv::createTrackbar("hmin",WIN_NAME_TARGET,&tsize.hmin, 1000);
-    cv::createTrackbar("hmax",WIN_NAME_TARGET,&tsize.hmax, 1000);
-    cv::createTrackbar("radiol",WIN_NAME_TARGET,&tsize.radiol, 10);
-    cv::createTrackbar("radioh",WIN_NAME_TARGET,&tsize.radioh, 20);
-
-    //³õÊ¼»¯»­²¼£¬ÒÔÏÔÊ¾²É¼¯µÄÊı¾İ
-    //»­²¼¿í¶È
-    //»­²¼¸ß¶È
-    //ÏÔÊ¾Êı¾İ¸öÊı???-1 »­²¼¿í¶È???
-    //ÏÔÊ¾Êı¾İ·¶Î§???-1 »­²¼¸ß¶È???
+    cv::createTrackbar("wmin",WIN_NAME_TARGET,&tsize.wmin, 450,NULL);
+    cv::createTrackbar("wmax",WIN_NAME_TARGET,&tsize.wmax, 1000,NULL);
+    cv::createTrackbar("hmin",WIN_NAME_TARGET,&tsize.hmin, 450,NULL);
+    cv::createTrackbar("hmax",WIN_NAME_TARGET,&tsize.hmax, 1000,NULL);
+    cv::createTrackbar("radiol",WIN_NAME_TARGET,&tsize.radiol, 10,NULL);
+    cv::createTrackbar("radioh",WIN_NAME_TARGET,&tsize.radioh, 20,NULL);
+    
+    //åˆå§‹åŒ–ç”»å¸ƒï¼Œä»¥æ˜¾ç¤ºé‡‡é›†çš„æ•°æ®
+    //ç”»å¸ƒå®½åº¦
+    //ç”»å¸ƒé«˜åº¦
+    //æ˜¾ç¤ºæ•°æ®ä¸ªæ•°???-1 ç”»å¸ƒå®½åº¦???
+    //æ˜¾ç¤ºæ•°æ®èŒƒå›´???-1 ç”»å¸ƒé«˜åº¦???
     DataCollect data_col(1000,510,-1,400);
-
+    
     while(1)
     {
         cap>>Image;
-
+        
         if(Image.empty())
-          return -1;
-        cv::imshow("Ô­Í¼",Image);
-        // ×ª»»Îª»Ò¶ÈÍ¼
+            return -1;
+//        cv::imshow("åŸå›¾",Image);
+        // è½¬æ¢ä¸ºç°åº¦å›¾
         Mat ImageGray;
-        cv::cvtColor(Image,ImageGray,CV_BGR2GRAY);
-
-        //¾Ö²¿¶şÖµ»¯
+        cv::cvtColor(Image,ImageGray,COLOR_BGR2GRAY);
+        
+        //å±€éƒ¨äºŒå€¼åŒ–
         Mat bin;
         cv::adaptiveThreshold(ImageGray, bin, 255, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY, adt.blockSize*2+1, adt.constValue);
-        cv::imshow("¶şÖµÍ¼",bin);
-
-        //Ñ°ÕÒ±ßÔµ
+//        cv::imshow("äºŒå€¼å›¾",bin);
+        
+        //å¯»æ‰¾è¾¹ç¼˜
         std::vector<std::vector<cv::Point2i>>contours;
         std::vector<cv::Vec4i>hierarchy;
         cv::findContours(bin,contours,hierarchy,cv::RETR_TREE, cv::CHAIN_APPROX_NONE);
-
-        //ÄâºÏ¾ØĞÎ
+        
+        //æ‹ŸåˆçŸ©å½¢
         Rect rrect;
         Mat show_img=Image.clone();
-        for(int i=0;i<contours.size();i++)
+
+        for(int i = 0; i < contours.size(); i++)
         {
             cv::Rect rect = boundingRect(contours[i]);
-            //É¸Ñ¡³ö·ûºÏÌõ¼şµÄ¾ØĞÎ
-            if(rect.width >= tsize.wmin&&rect.width <= tsize.wmax&&
-                rect.height >= tsize.hmin&&rect.width <= tsize.hmax&&
-                (rect.width * 1.0 / rect.height) >= tsize.radiol*0.1&&(rect.width * 1.0 / rect.height) <= tsize.radioh*0.1)
+            //ç­›é€‰å‡ºç¬¦åˆæ¡ä»¶çš„çŸ©å½¢
+            if(rect.width >= tsize.wmin && rect.width <= tsize.wmax&&
+               rect.height >= tsize.hmin && rect.width <= tsize.hmax&&
+               (rect.width * 1.0 / rect.height) >= tsize.radiol * 0.1 && (rect.width * 1.0 / rect.height) <= tsize.radioh * 0.1)
             {
                 rrect=rect;
-                rectangle(show_img,rect,Scalar(0,255,0),2);//»­ÔÚshow_imgÉÏ£¬·ûºÏÌõ¼ş->ÂÌÉ«
+                rectangle(show_img,rect,Scalar(0,255,0),2);//ç”»åœ¨show_imgä¸Šï¼Œç¬¦åˆæ¡ä»¶->ç»¿è‰²
                 char trect[10];
                 sprintf(trect,"%d %d",rect.width,rect.height);
                 putText(show_img,trect,rect.br(),1,2,Scalar(0,255,0),1);
             }
             else
             {
-                rectangle(show_img,rect,Scalar(0,0,255),2);//»­ÔÚshow_imgÉÏ£¬²»·ûºÏÌõ¼ş->ºìÉ«
+                rectangle(show_img,rect,Scalar(0,0,255),2);//ç”»åœ¨show_imgä¸Šï¼Œä¸ç¬¦åˆæ¡ä»¶->çº¢è‰²
             }
         }
-        imshow("rect",show_img);//ÏÔÊ¾½á¹û
-
+        imshow("rect",show_img);//æ˜¾ç¤ºç»“æœ
+        
         /**
-         * ÊµÏÖ£ºÊµÊ±Êı¾İ  rect.x/rect.y  µÄÂË²¨
-         * 1/¹ıÂË¸ßÆµÔëÉù
-         * 2/Êı¾İ·¢Éú½×Ô½Ìø±äÊ±£¬Ê¹Êı¾İ±ä»¯Æ½»º
-         * ¿¨¶ûÂüÂË²¨¶¯Ì¬¹ì¼£Ô¤²â
-         * ÔÚshow_imgÖĞ»­³öÂË²¨Ç°ÓëÂË²¨ºóµÄ¹ì¼£
+         * å®ç°ï¼šå®æ—¶æ•°æ®  rect.x/rect.y  çš„æ»¤æ³¢
+         * 1/è¿‡æ»¤é«˜é¢‘å™ªå£°
+         * 2/æ•°æ®å‘ç”Ÿé˜¶è¶Šè·³å˜æ—¶ï¼Œä½¿æ•°æ®å˜åŒ–å¹³ç¼“
+         * å¡å°”æ›¼æ»¤æ³¢åŠ¨æ€è½¨è¿¹é¢„æµ‹
+         * åœ¨show_imgä¸­ç”»å‡ºæ»¤æ³¢å‰ä¸æ»¤æ³¢åçš„è½¨è¿¹
          * @date   2018.11.19
          */
+        
+        //æ˜¾ç¤º
+        vector<float> data;
+        data.push_back(rrect.x);
+        data.push_back(rrect.y);
+        vector<Scalar> color;
+        color.push_back(Scalar(0, 255, 0));
+        color.push_back(Scalar(0, 0, 255));
 
-        //ÏÔÊ¾
-        data_col.dataCollect(rrect.x,Scalar(0,255,0),"rrect.x");
+        data_col.dataCollectProc(data, color, "rrect");
+
+//        data_col.dataCollectInvProc(rrect.x, Scalar(0,255,0), "rrect.x");
         waitKey(1);
     }
     return 0;
